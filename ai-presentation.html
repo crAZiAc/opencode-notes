@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Tools – Tips & Tricks</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f0f1a; color: #e0e0f0; }
+
+  .deck { width: 100%; margin: 0; padding: 0; }
+
+  .slide {
+    display: none; width: 100%; aspect-ratio: 16/9;
+    position: relative; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .slide.active { display: flex; }
+
+  .controls {
+    display: flex; align-items: center; justify-content: center;
+    gap: 16px; padding: 10px 0;
+  }
+  .controls button {
+    background: #1e1e35; border: 1px solid #3a3a6a; color: #c0c0e8;
+    padding: 8px 22px; border-radius: 8px; cursor: pointer; font-size: 14px;
+    transition: background .2s;
+  }
+  .controls button:hover { background: #2d2d55; }
+  .controls button:disabled { opacity: 0.3; cursor: default; }
+  #slide-counter { color: #7070a0; font-size: 13px; min-width: 60px; text-align: center; }
+
+  .bg-gradient-1 { background: linear-gradient(135deg, #0d0d2b 0%, #1a0a3d 50%, #0a1a3d 100%); }
+  .bg-gradient-2 { background: linear-gradient(135deg, #080820 0%, #12122e 100%); }
+  .bg-gradient-3 { background: linear-gradient(135deg, #0a1520 0%, #0d2030 100%); }
+
+  .slide-inner { width: 100%; padding: 4% 6%; display: flex; flex-direction: column; justify-content: center; }
+
+  /* Slide 1 */
+  .s1 { align-items: center; justify-content: center; text-align: center; }
+  .s1 .eyebrow { font-size: clamp(12px,1.4vw,22px); letter-spacing:.25em; text-transform:uppercase; color:#7c88ff; margin-bottom:1em; }
+  .s1 h1 { font-size: clamp(36px,6vw,96px); font-weight:800; line-height:1.1;
+    background: linear-gradient(120deg,#a78bfa,#60a5fa,#34d399);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .s1 .sub { font-size: clamp(14px,1.6vw,26px); color:#6870a0; margin-top:.8em; }
+  .s1 .dots { display:flex; gap:10px; margin-top:1.6em; justify-content:center; }
+  .s1 .dot { width:clamp(8px,1vw,14px); height:clamp(8px,1vw,14px); border-radius:50%; }
+  .d1{background:#a78bfa;} .d2{background:#60a5fa;} .d3{background:#34d399;}
+
+  /* Slide 2 */
+  .pipeline { flex-direction:row; align-items:center; justify-content:space-between; gap:1%; }
+  .pipe-box {
+    background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.12);
+    border-radius:12px; padding:3% 4%; text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:8px; flex-shrink:0;
+  }
+  .pipe-label { font-size:clamp(11px,1.2vw,20px); color:#9090c0; }
+  .pipe-title { font-size:clamp(14px,1.7vw,28px); font-weight:700; color:#e0e0ff; }
+  .prompt-icon { font-size:clamp(28px,4vw,64px); }
+  .arrow { display:flex; flex-direction:column; align-items:center; flex-shrink:0; }
+  .arrow-line { width:clamp(24px,4vw,64px); height:2px; background:linear-gradient(90deg,#5560ff,#8855ff); position:relative; }
+  .arrow-line::after { content:''; position:absolute; right:-6px; top:-5px; border:6px solid transparent; border-left-color:#8855ff; }
+  .cloud-box {
+    flex:1; background:rgba(120,80,255,.08); border:1.5px dashed rgba(150,100,255,.35);
+    border-radius:50px; padding:3% 2%; display:flex; flex-direction:column; align-items:center; gap:8px; position:relative; min-width:0;
+  }
+  .cloud-emoji { font-size:clamp(22px,3vw,48px); }
+  .cloud-qmarks { font-size:clamp(16px,2vw,32px); color:#9970ff; letter-spacing:.1em; }
+  .tool-tags { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:4px; }
+  .tool-tag { font-size:clamp(9px,1vw,16px); padding:3px 10px; border-radius:20px; font-weight:600; white-space:nowrap; }
+  .tt1{background:rgba(168,139,250,.2);color:#c4aaff;}
+  .tt2{background:rgba(96,165,250,.2);color:#93c5fd;}
+  .tt3{background:rgba(52,211,153,.2);color:#6ee7b7;}
+  .tt4{background:rgba(251,191,36,.2);color:#fde68a;}
+  .llm-glow { font-size:clamp(26px,3.5vw,56px); filter:drop-shadow(0 0 10px #a78bfa); }
+
+  /* Slides 3–5 */
+  .feature-slide .slide-inner { justify-content:flex-start; padding-top:5%; }
+  .slide-heading {
+    font-size:clamp(20px,3vw,48px); font-weight:800; margin-bottom:3%;
+    background:linear-gradient(90deg,#a78bfa,#60a5fa);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; display:inline-block;
+  }
+  .slide-heading-sub { font-size:clamp(10px,1.2vw,18px); font-weight:400; color:#6060a0; -webkit-text-fill-color:#6060a0; margin-left:8px; }
+  .badge {
+    display:inline-block; font-size:clamp(8px,1vw,14px); padding:3px 10px; border-radius:20px;
+    background:rgba(167,139,250,.2); color:#c4aaff; font-weight:700; letter-spacing:.08em; margin-left:10px; vertical-align:middle; -webkit-text-fill-color:#c4aaff;
+  }
+  .gh-link {
+    display:inline-flex; align-items:center; gap:6px; font-size:clamp(9px,1.1vw,17px);
+    color:#6080b0; text-decoration:none; margin-bottom:3%;
+    border:1px solid rgba(255,255,255,.08); border-radius:6px; padding:4px 10px;
+    background:rgba(255,255,255,.03); transition:background .2s;
+  }
+  .gh-link svg { width:clamp(12px,1.2vw,18px); height:clamp(12px,1.2vw,18px); }
+  .gh-link:hover { background:rgba(255,255,255,.07); color:#90b0e0; }
+  .feature-list { list-style:none; display:flex; flex-direction:column; gap:clamp(8px,1.3vw,20px); }
+  .feature-list li { display:flex; align-items:flex-start; gap:12px; font-size:clamp(13px,1.7vw,28px); color:#ccd0f0; line-height:1.4; }
+  .feature-list li .icon { width:clamp(22px,2.8vw,44px); height:clamp(22px,2.8vw,44px); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:clamp(12px,1.5vw,22px); flex-shrink:0; margin-top:2px; }
+  .ic-purple{background:rgba(167,139,250,.2);} .ic-blue{background:rgba(96,165,250,.2);}
+  .ic-green{background:rgba(52,211,153,.2);} .ic-amber{background:rgba(251,191,36,.2);}
+  .feature-list li span { flex:1; }
+  .feature-list li strong { color:#e8e0ff; font-weight:600; }
+
+  /* Slide 5 mode cards */
+  .mode-cards { display:flex; gap:2%; margin-top:3%; }
+  .mode-card { flex:1; border-radius:14px; padding:clamp(10px,1.8vw,28px) clamp(12px,2vw,30px); display:flex; flex-direction:column; gap:8px; }
+  .mc1{background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.25);}
+  .mc2{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.25);}
+  .mc3{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.25);}
+  .mc-title { font-size:clamp(12px,1.6vw,26px); font-weight:700; }
+  .mc1 .mc-title{color:#93c5fd;} .mc2 .mc-title{color:#c4aaff;} .mc3 .mc-title{color:#6ee7b7;}
+  .mc-code { font-family:monospace; font-size:clamp(9px,1.2vw,18px); color:#8899bb; background:rgba(0,0,0,.3); border-radius:5px; padding:3px 8px; display:inline-block; }
+  .mc-desc { font-size:clamp(9px,1.1vw,17px); color:#8090b0; line-height:1.5; }
+
+  /* Slide 6 */
+  .git-slide .slide-inner { flex-direction:row; align-items:stretch; padding:4% 6%; gap:3%; }
+  .git-heading { font-size:clamp(16px,2.5vw,40px); font-weight:800;
+    background:linear-gradient(90deg,#f97316,#fb923c);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8%; text-align:center; }
+
+  .main-repo-box {
+    background:linear-gradient(135deg,rgba(249,115,22,.18),rgba(251,146,60,.08));
+    border:1.5px solid rgba(249,115,22,.5); border-radius:12px;
+    padding:clamp(8px,1.3vw,20px) clamp(12px,2.5vw,38px); text-align:center;
+  }
+  .main-repo-box .r-title { font-size:clamp(11px,1.5vw,22px); font-weight:700; color:#fed7aa; }
+  .main-repo-box .r-sub { font-size:clamp(8px,1vw,14px); color:#a06030; margin-top:3px; }
+  .m-commit { font-family:monospace; font-size:clamp(7px,.95vw,14px); color:#7a6040; background:rgba(0,0,0,.3); border-radius:4px; padding:2px 7px; }
+  .m-commit.head { color:#fb923c; background:rgba(249,115,22,.12); border:1px solid rgba(249,115,22,.3); font-weight:700; }
+
+  .submod-header {
+    background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12);
+    border-radius:10px 10px 0 0; padding:clamp(5px,1vw,14px) clamp(10px,1.5vw,22px);
+    text-align:center; width:100%; border-bottom:none;
+  }
+  .submod-header .sm-name { font-size:clamp(10px,1.4vw,20px); font-weight:700; color:#93c5fd; }
+  .submod-header .sm-own { font-size:clamp(7px,.85vw,12px); color:#4a5a7a; margin-top:2px; }
+
+  .commit-node {
+    width:100%; padding:clamp(4px,.7vw,10px) clamp(8px,1.2vw,16px);
+    display:flex; align-items:center; gap:8px;
+    background:rgba(255,255,255,.03); border-left:1px solid rgba(255,255,255,.1); border-right:1px solid rgba(255,255,255,.1);
+  }
+  .commit-node:last-child { border-radius:0 0 8px 8px; border-bottom:1px solid rgba(255,255,255,.1); }
+  .commit-dot { width:clamp(8px,1.1vw,16px); height:clamp(8px,1.1vw,16px); border-radius:50%; background:#2a3050; border:1.5px solid #4a5a80; flex-shrink:0; }
+  .commit-dot.pinned { background:#f97316; border-color:#fb923c; box-shadow:0 0 8px rgba(249,115,22,.7); }
+  .commit-hash { font-family:monospace; font-size:clamp(8px,1vw,14px); color:#5a6a8a; }
+  .commit-hash.pinned { color:#fb923c; font-weight:700; }
+  .commit-msg { font-size:clamp(7px,.85vw,12px); color:#3a4a6a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .commit-msg.pinned { color:#a07040; }
+  .vline { width:1.5px; height:clamp(5px,.8vw,12px); background:#2a3a5a; }
+  .pinned-label { font-size:clamp(7px,.85vw,12px); color:#f97316; background:rgba(249,115,22,.12); border:1px solid rgba(249,115,22,.3); border-radius:4px; padding:1px 6px; white-space:nowrap; margin-left:auto; flex-shrink:0; }
+
+  .legend-item { display:flex; align-items:center; gap:6px; font-size:clamp(7px,.9vw,13px); color:#445070; }
+  .legend-dot { width:10px; height:10px; border-radius:50%; background:#f97316; box-shadow:0 0 5px rgba(249,115,22,.6); }
+  .legend-line { width:22px; height:1.5px; background:#f97316; opacity:.6; }
+
+  #git-svg-overlay { position:absolute; inset:0; pointer-events:none; overflow:visible; }
+
+  .grid-bg::before {
+    content:''; position:absolute; inset:0;
+    background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+    background-size:40px 40px; pointer-events:none;
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- Slide 1 -->
+  <div class="slide active bg-gradient-1 grid-bg">
+    <div class="slide-inner s1">
+      <h1>AI Tools</h1>
+      <div style="font-size:clamp(18px,2.8vw,46px);font-weight:600;background:linear-gradient(120deg,#a78bfa,#60a5fa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-top:0.3em;">Tips &amp; Tricks</div>
+      <div class="dots" style="margin-top:1.4em;"><div class="dot d1"></div><div class="dot d2"></div><div class="dot d3"></div></div>
+      <div style="position:absolute;bottom:3%;width:100%;text-align:center;font-size:clamp(10px,1.1vw,16px);color:#3a3a6a;letter-spacing:.08em;">E. Gnevushev. 2026</div>
+    </div>
+  </div>
+
+  <!-- Slide 2 -->
+  <div class="slide bg-gradient-2">
+    <div class="slide-inner pipeline">
+      <div class="pipe-box">
+        <div class="prompt-icon">💬</div>
+        <div class="pipe-title">Your Prompt</div>
+        <div class="pipe-label">natural language</div>
+      </div>
+      <div class="arrow"><div class="arrow-line"></div></div>
+      <div class="cloud-box">
+        <div class="cloud-emoji">☁️</div>
+        <div class="cloud-qmarks">? ? ?</div>
+        <div class="tool-tags">
+          <span class="tool-tag tt1">Claude Code</span>
+          <span class="tool-tag tt2">Codex</span>
+          <span class="tool-tag tt3">OpenCode</span>
+          <span class="tool-tag tt4">Copilot</span>
+        </div>
+      </div>
+      <div class="arrow"><div class="arrow-line"></div></div>
+      <div class="pipe-box">
+        <div class="llm-glow">🤖</div>
+        <div class="pipe-title">LLM</div>
+        <div class="pipe-label">generates output</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 3 – OpenCode -->
+  <div class="slide feature-slide bg-gradient-3">
+    <div class="slide-inner">
+      <div class="slide-heading">OpenCode <span class="badge">OSS</span></div>
+      <a class="gh-link" href="https://github.com/anomalyco/opencode" target="_blank">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        github.com/anomalyco/opencode
+      </a>
+      <ul class="feature-list">
+        <li><div class="icon ic-green">🔓</div><span><strong>Open-source</strong> — full transparency, community-driven</span></li>
+        <li><div class="icon ic-blue">🔀</div><span><strong>Any model, one session</strong> — switch between Claude, OpenAI, Gemini &amp; others on the fly</span></li>
+        <li><div class="icon ic-purple">🧩</div><span><strong>Rich extension ecosystem</strong> — plugins &amp; add-ons for almost every workflow</span></li>
+        <li><div class="icon ic-amber">🔬</div><span><strong>Built-in LSP / AST</strong> — understands code structure natively; smarter completions &amp; refactors</span></li>
+      </ul>
+
+      <!-- LSP diagram -->
+      <div style="margin-top:auto;padding-top:2%;display:flex;gap:3%;align-items:flex-start;width:100%;">
+
+        <!-- Without LSP -->
+        <div style="flex:1;display:flex;flex-direction:column;gap:clamp(6px,.9vw,12px);">
+          <div style="font-size:clamp(10px,1.3vw,18px);font-weight:700;color:#9090b0;margin-bottom:2px;">Without LSP</div>
+          <div style="display:flex;align-items:center;gap:clamp(6px,1vw,14px);">
+            <div style="font-family:monospace;font-size:clamp(9px,1.2vw,18px);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:clamp(4px,.7vw,10px) clamp(8px,1.2vw,16px);color:#c0c0d0;white-space:nowrap;">grep -r "User"</div>
+            <div style="display:flex;align-items:center;gap:2px;flex-shrink:0;">
+              <div style="width:clamp(14px,2.2vw,32px);height:1.5px;background:#6070a0;"></div>
+              <div style="border:5px solid transparent;border-left-color:#6070a0;margin-left:-1px;"></div>
+            </div>
+            <div style="font-size:clamp(9px,1.2vw,18px);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:clamp(4px,.7vw,10px) clamp(8px,1.2vw,16px);color:#9090b0;text-align:center;flex-shrink:0;">
+              <div style="color:#c0c0d0;font-weight:600;">847 matches</div>
+              <div style="font-size:.85em;">203 files</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:clamp(6px,1vw,14px);">
+            <div style="background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.35);border-radius:6px;padding:clamp(4px,.7vw,10px) clamp(8px,1.2vw,16px);font-size:clamp(9px,1.2vw,18px);font-family:monospace;">
+              <div style="color:#fde047;font-weight:600;">~30-60 seconds</div>
+              <div style="color:#a08030;font-size:.85em;">maybe correct</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:2px;flex-shrink:0;">
+              <div style="border:5px solid transparent;border-right-color:#6070a0;margin-right:-1px;"></div>
+              <div style="width:clamp(14px,2.2vw,32px);height:1.5px;background:#6070a0;"></div>
+            </div>
+            <div style="font-size:clamp(9px,1.2vw,18px);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:clamp(4px,.7vw,10px) clamp(8px,1.2vw,16px);color:#9090b0;text-align:center;flex-shrink:0;">
+              <div style="color:#c0c0d0;">Filter &amp; read</div>
+              <div style="font-size:.85em;">each file...</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="width:1px;background:rgba(255,255,255,.08);align-self:stretch;flex-shrink:0;"></div>
+
+        <!-- With LSP -->
+        <div style="flex:1;display:flex;flex-direction:column;gap:clamp(6px,.9vw,12px);">
+          <div style="font-size:clamp(10px,1.3vw,18px);font-weight:700;color:#9090b0;margin-bottom:2px;">With LSP</div>
+          <div style="display:flex;align-items:center;gap:clamp(6px,1vw,14px);">
+            <div style="font-family:monospace;font-size:clamp(9px,1.2vw,18px);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:clamp(4px,.7vw,10px) clamp(8px,1.2vw,16px);color:#e0e0f0;white-space:nowrap;">goToDefinition</div>
+            <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+              <div style="font-size:clamp(7px,.9vw,12px);color:#6070a0;margin-bottom:1px;">JSON-RPC</div>
+              <div style="display:flex;align-items:center;gap:2px;">
+                <div style="width:clamp(14px,2.2vw,32px);height:1.5px;background:#4a5a80;border-top:1.5px dashed #4a5a80;"></div>
+                <div style="border:5px solid transparent;border-left-color:#4a5a80;margin-left:-1px;"></div>
+              </div>
+            </div>
+            <div style="font-family:monospace;font-size:clamp(9px,1.2vw,18px);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:clamp(4px,.7vw,10px) clamp(8px,1.2vw,16px);color:#e0e0f0;flex-shrink:0;text-align:center;">
+              <div style="font-weight:600;">UserService.cs</div>
+              <div style="color:#8090b0;font-size:.85em;">line 42</div>
+            </div>
+          </div>
+          <div style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:6px;padding:clamp(5px,.8vw,12px) clamp(8px,1.2vw,16px);text-align:center;">
+            <div style="font-size:clamp(10px,1.4vw,20px);font-weight:700;color:#6ee7b7;">~50ms · 100% accurate</div>
+            <div style="font-size:clamp(8px,1vw,14px);color:#3a7a5a;margin-top:2px;">~900× faster, guaranteed accuracy</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 4 – Oh-My-OpenCode features -->
+  <div class="slide feature-slide bg-gradient-2">
+    <div class="slide-inner">
+      <div class="slide-heading">Oh-My-OpenCode <span class="slide-heading-sub">oh-my-openagent</span></div>
+      <a class="gh-link" href="https://github.com/code-yeongyu/oh-my-openagent" target="_blank">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        github.com/code-yeongyu/oh-my-openagent
+      </a>
+      <ul class="feature-list">
+        <li><div class="icon ic-purple">🎛️</div><span><strong>Extended multi-model orchestration</strong> — route sub-tasks to the best model automatically</span></li>
+        <li><div class="icon ic-blue">🤝</div><span><strong>Multi-agent + background agents</strong> — parallel agents working on different parts simultaneously</span></li>
+        <li><div class="icon ic-green">🛠️</div><span><strong>Extended LSP / AST tooling</strong> — deeper code-graph analysis, cross-file refactoring</span></li>
+        <li><div class="icon ic-amber">✨</div><span><strong>And more</strong> — custom workflows, hooks, etc.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 5 – Modes -->
+  <div class="slide feature-slide bg-gradient-3">
+    <div class="slide-inner">
+      <div class="slide-heading">Oh-My-OpenCode <span class="slide-heading-sub">oh-my-openagent</span> — Modes</div>
+      <div class="mode-cards">
+        <div class="mode-card mc1">
+          <div class="mc-title">🗣️ Normal</div>
+          <div class="mc-code">default</div>
+          <div class="mc-desc">Classic interactive session — ask questions, get code suggestions, tweak on the fly</div>
+        </div>
+        <div class="mode-card mc2">
+          <div class="mc-title">🗺️ Plan + Work</div>
+          <div class="mc-code">@plan / /start-work</div>
+          <div class="mc-desc">First produce a structured plan, then execute it step-by-step with confirmation checkpoints</div>
+        </div>
+        <div class="mode-card mc3">
+          <div class="mc-title">⚡ Ultrawork</div>
+          <div class="mc-code">ultrawork</div>
+          <div class="mc-desc">Fully autonomous, multi-agent execution — hands-off from prompt to PR with background agents</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 6 – Git Submodules -->
+  <div class="slide bg-gradient-1 git-slide" id="slide-git" style="position:relative;">
+    <svg id="git-svg-overlay"></svg>
+    <div class="slide-inner" style="flex-direction:row;align-items:stretch;padding:4% 6%;gap:3%;">
+
+      <!-- Left: main repo -->
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:26%;">
+        <div class="git-heading">Git Submodules</div>
+        <div class="main-repo-box" id="main-repo-box">
+          <div class="r-title">📦 main-repo</div>
+          <div class="r-sub">.gitmodules</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:12px;">
+            <div class="m-commit">f3a91b2</div>
+            <div class="vline"></div>
+            <div class="m-commit">c7d20e4</div>
+            <div class="vline"></div>
+            <div class="m-commit head">a8b3c11 ← HEAD</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:auto;padding-top:10px;">
+          <div class="legend-item"><div class="legend-dot"></div> pinned commit</div>
+          <div class="legend-item"><div class="legend-line"></div> points to</div>
+        </div>
+      </div>
+
+      <!-- Right: two submodules -->
+      <div style="flex:1;display:flex;gap:4%;align-items:flex-start;">
+
+        <!-- Submodule A -->
+        <div style="display:flex;flex-direction:column;align-items:center;flex:1;" id="sm-col-a">
+          <div class="submod-header">
+            <div class="sm-name">📁 Modeling</div>
+            <div class="sm-own">own git repository</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;width:100%;">
+            <div class="vline"></div>
+            <div class="commit-node">
+              <div class="commit-dot"></div>
+              <div><div class="commit-hash">9e2f1a0</div><div class="commit-msg">fix: edge case</div></div>
+            </div>
+            <div class="vline"></div>
+            <div class="commit-node" id="pin-a">
+              <div class="commit-dot pinned"></div>
+              <div><div class="commit-hash pinned">4d7c832</div><div class="commit-msg pinned">feat: new API</div></div>
+              <div class="pinned-label">← pinned</div>
+            </div>
+            <div class="vline"></div>
+            <div class="commit-node">
+              <div class="commit-dot"></div>
+              <div><div class="commit-hash">1a3b56e</div><div class="commit-msg">chore: cleanup</div></div>
+            </div>
+            <div class="vline"></div>
+            <div class="commit-node">
+              <div class="commit-dot"></div>
+              <div><div class="commit-hash">0c8f2d9</div><div class="commit-msg">init: scaffold</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submodule B -->
+        <div style="display:flex;flex-direction:column;align-items:center;flex:1;" id="sm-col-b">
+          <div class="submod-header">
+            <div class="sm-name">📁 Presentation</div>
+            <div class="sm-own">own git repository</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;width:100%;">
+            <div class="vline"></div>
+            <div class="commit-node">
+              <div class="commit-dot"></div>
+              <div><div class="commit-hash">b5d3a71</div><div class="commit-msg">refactor: styles</div></div>
+            </div>
+            <div class="vline"></div>
+            <div class="commit-node">
+              <div class="commit-dot"></div>
+              <div><div class="commit-hash">e1c9f04</div><div class="commit-msg">feat: dark mode</div></div>
+            </div>
+            <div class="vline"></div>
+            <div class="commit-node" id="pin-b">
+              <div class="commit-dot pinned"></div>
+              <div><div class="commit-hash pinned">7a2e319</div><div class="commit-msg pinned">fix: button focus</div></div>
+              <div class="pinned-label">← pinned</div>
+            </div>
+            <div class="vline"></div>
+            <div class="commit-node">
+              <div class="commit-dot"></div>
+              <div><div class="commit-hash">3f0b8c2</div><div class="commit-msg">init: components</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="prev-btn" disabled>← Prev</button>
+    <span id="slide-counter">1 / 6</span>
+    <button id="next-btn">Next →</button>
+  </div>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let cur = 0;
+  const prev = document.getElementById('prev-btn');
+  const next = document.getElementById('next-btn');
+  const counter = document.getElementById('slide-counter');
+
+  function show(n) {
+    slides[cur].classList.remove('active');
+    cur = n;
+    slides[cur].classList.add('active');
+    prev.disabled = cur === 0;
+    next.disabled = cur === slides.length - 1;
+    counter.textContent = `${cur+1} / ${slides.length}`;
+    if (cur === 5) setTimeout(drawGitArrows, 60);
+  }
+
+  prev.onclick = () => show(cur - 1);
+  next.onclick = () => show(cur + 1);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' && cur < slides.length-1) show(cur+1);
+    if (e.key === 'ArrowLeft'  && cur > 0) show(cur-1);
+  });
+
+  function drawGitArrows() {
+    const svg = document.getElementById('git-svg-overlay');
+    const slide = document.getElementById('slide-git');
+    svg.innerHTML = '';
+    const sRect = slide.getBoundingClientRect();
+    const srcEl = document.getElementById('main-repo-box');
+    const srcR = srcEl.getBoundingClientRect();
+    const srcX = srcR.right - sRect.left;
+    const srcY = srcR.top + srcR.height * 0.5 - sRect.top;
+
+    ['pin-a','pin-b'].forEach((id, i) => {
+      const dst = document.getElementById(id);
+      const dR = dst.getBoundingClientRect();
+      const dstX = dR.left - sRect.left;
+      const dstY = dR.top + dR.height * 0.5 - sRect.top;
+      const cx = srcX + (dstX - srcX) * 0.5;
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', `M${srcX},${srcY} C${cx},${srcY} ${cx},${dstY} ${dstX},${dstY}`);
+      path.setAttribute('stroke','#f97316'); path.setAttribute('stroke-width','2');
+      path.setAttribute('fill','none'); path.setAttribute('stroke-opacity','0.75');
+      path.setAttribute('stroke-dasharray','6,4');
+
+      const tip = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+      tip.setAttribute('points',`${dstX-1},${dstY-6} ${dstX-1},${dstY+6} ${dstX+9},${dstY}`);
+      tip.setAttribute('fill','#f97316'); tip.setAttribute('fill-opacity','0.9');
+
+      const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('cx', srcX); dot.setAttribute('cy', srcY); dot.setAttribute('r','4');
+      dot.setAttribute('fill','#f97316'); dot.setAttribute('fill-opacity','0.7');
+
+      svg.appendChild(path); svg.appendChild(tip);
+      if (i === 0) svg.appendChild(dot);
+    });
+  }
+</script>
+</body>
+</html>
